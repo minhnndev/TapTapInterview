@@ -17,10 +17,14 @@ import {
 import {useAppDispatch, useAppSelector} from '../redux/store';
 import {Priority, TodoItem as TodoItemType} from '../types';
 
+import useKeyboardVisibility from '../hook/useKeyboardVisibility';
+
 import TodoItem from '../components/TodoItem';
 import ModalAddTodo from '../components/modal/ModalAddTodo';
 
 export const Home = () => {
+  const isKeyboardVisible = useKeyboardVisibility();
+
   const dispatch = useAppDispatch();
   const todos = useAppSelector(state => state.todo.items);
   const selectedTodos = todos.filter(todo => todo.selected);
@@ -156,11 +160,13 @@ export const Home = () => {
         // )}
       />
 
-      <View style={styles.buttonContainer}>
-        {selectedTodos.length > 0
-          ? renderActionButtons(selectedTodos.length)
-          : renderCreateTaskButton()}
-      </View>
+      {!isKeyboardVisible && (
+        <View style={styles.buttonContainer}>
+          {selectedTodos.length > 0
+            ? renderActionButtons(selectedTodos.length)
+            : renderCreateTaskButton()}
+        </View>
+      )}
 
       <ModalAddTodo
         visible={isCreateTask}

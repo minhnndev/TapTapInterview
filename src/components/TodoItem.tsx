@@ -171,6 +171,7 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   title: {
+    color: '#1A1818',
     fontSize: 16,
     fontWeight: '500',
     marginBottom: 4,

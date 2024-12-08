@@ -29,29 +29,27 @@ export const TodoForm = ({itemInitial, onCancel}: Props) => {
   const [title, setTitle] = useState(itemInitial.title);
   const [dueDate, setDueDate] = useState(itemInitial.dueDate);
   const [priority, setPriority] = useState(itemInitial.priority);
+  const [showDatePicker, setShowDatePicker] = useState(false);
+
+  const handleDateChange = (_, selectedDate) => {
+    setShowDatePicker(false);
+    if (selectedDate) {
+      setDueDate(dayjs(selectedDate).toISOString());
+    }
+  };
 
   const handleSubmit = () => {
+    const todoData = {
+      ...itemInitial,
+      title: title.trim(),
+      dueDate,
+      priority,
+    };
     if (title.trim() && dueDate) {
-      const todoData = {
-        id: itemInitial.id,
-        title: title.trim(),
-        dueDate,
-        priority,
-        ...itemInitial,
-      };
-
       if (itemInitial.id) {
-        dispatch(
-          updateTodo({
-            ...todoData,
-          }),
-        );
+        dispatch(updateTodo(todoData));
       } else {
-        dispatch(
-          addTodo({
-            ...todoData,
-          }),
-        );
+        dispatch(addTodo(todoData));
       }
       onCancel();
     }
@@ -100,15 +98,22 @@ export const TodoForm = ({itemInitial, onCancel}: Props) => {
 
       <View style={styles.flexRowBetween}>
         <Text style={styles.priorityLabel}>Thời hạn:</Text>
-        <DateTimePicker
-          value={dayjs(dueDate).toDate()}
-          mode="date"
-          display="default"
-          onChange={(_, selectedDate) => {
-            setDueDate(dayjs(selectedDate).toISOString());
-          }}
-          locale="vi"
-        />
+        <TouchableOpacity
+          style={styles.dateButton}
+          onPress={() => setShowDatePicker(true)}>
+          <Text style={styles.dateText}>
+            {dayjs(dueDate).format('DD/MM/YYYY')}
+          </Text>
+        </TouchableOpacity>
+        {showDatePicker && (
+          <DateTimePicker
+            value={dayjs(dueDate).toDate()}
+            mode="date"
+            display="spinner"
+            onChange={handleDateChange}
+            locale="vi"
+          />
+        )}
       </View>
 
       <View style={styles.priorityContainer}>
@@ -204,5 +209,16 @@ const styles = StyleSheet.create({
     color: 'white',
     fontSize: 16,
     fontWeight: '500',
+  },
+
+  dateButton: {
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    backgroundColor: '#E0E0E0',
+    borderRadius: 8,
+  },
+  dateText: {
+    fontSize: 16,
+    color: '#000',
   },
 });

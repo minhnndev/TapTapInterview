@@ -21,7 +21,7 @@ const todoSlice = createSlice({
       }>,
     ) => {
       state.items.push({
-        id: new Date(Date.now()).toISOString(),
+        id: Math.random().toString(36).substr(2, 9),
         title: action.payload.title,
         priority: action.payload.priority,
         createdAt: new Date(Date.now()).toISOString(),

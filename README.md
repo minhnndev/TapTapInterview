@@ -4,7 +4,7 @@
 
 ### Problem Statement:
 
-Build a simple To-do app with the following UI as described in the [link].
+Build a simple To-do app with the following UI as described in the Build a simple To-do app with the following UI as described in the [Figma Design](https://www.figma.com/design/Fz8vyQUiQdomPLp8XIK2Qq/Mobile-UI-Test).
 
 ### Product Requirements:
 

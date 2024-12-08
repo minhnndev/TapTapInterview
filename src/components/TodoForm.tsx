@@ -52,7 +52,7 @@ interface Props {
   priority: Priority;
   setPriority: (priority: Priority) => void;
   onSubmit: (title: string, dueDate: string, priority: Priority) => void;
-  onDelete: () => void;
+  onDelete?: () => void;
   onCancel: () => void;
 }
 
@@ -74,28 +74,30 @@ export const TodoForm = ({
   };
 
   return (
-    <View>
-      <TouchableOpacity
-        onPress={onDelete}
-        hitSlop={{
-          top: 10,
-          bottom: 10,
-          left: 10,
-          right: 10,
-        }}
-        style={{
-          alignSelf: 'flex-end',
-          padding: 8,
-          flexDirection: 'row',
-          alignItems: 'center',
-        }}>
-        <Image
-          source={IconAssets.deleteIcon}
-          resizeMode="contain"
-          style={styles.icon}
-        />
-        <Text style={{marginLeft: 8, color: '#1A1818'}}>Xóa</Text>
-      </TouchableOpacity>
+    <View style={styles.container}>
+      {onDelete && (
+        <TouchableOpacity
+          onPress={onDelete}
+          hitSlop={{
+            top: 10,
+            bottom: 10,
+            left: 10,
+            right: 10,
+          }}
+          style={{
+            alignSelf: 'flex-end',
+            padding: 8,
+            flexDirection: 'row',
+            alignItems: 'center',
+          }}>
+          <Image
+            source={IconAssets.deleteIcon}
+            resizeMode="contain"
+            style={styles.icon}
+          />
+          <Text style={{marginLeft: 8, color: '#1A1818'}}>Xóa</Text>
+        </TouchableOpacity>
+      )}
 
       <TextInput
         style={styles.input}
@@ -156,7 +158,15 @@ export const TodoForm = ({
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
+    backgroundColor: 'white',
+    borderRadius: 12,
+    marginBottom: 10,
+    padding: 16,
+    shadowColor: '#000',
+    shadowOffset: {width: 0, height: 2},
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
   },
   icon: {
     width: 16,

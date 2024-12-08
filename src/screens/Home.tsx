@@ -1,4 +1,4 @@
-import React, {useCallback} from 'react';
+import React, {useCallback, useState} from 'react';
 import {
   FlatList,
   SafeAreaView,
@@ -7,13 +7,20 @@ import {
   TouchableOpacity,
 } from 'react-native';
 import TodoItem from '../components/TodoItem';
-import {addTodo, deleteTodo, updateTodo} from '../redux/slices/todoSlice';
+import {addTodo, deleteTodo} from '../redux/slices/todoSlice';
 import {useAppDispatch, useAppSelector} from '../redux/store';
 import {Priority, TodoItem as TodoItemType} from '../types';
+import {TodoForm} from '../components/TodoForm';
 
 export const Home = () => {
   const dispatch = useAppDispatch();
   const todos = useAppSelector(state => state.todo.items);
+
+  const [isCreateTask, setIsCreateTask] = useState(false);
+
+  const [title, setTitle] = useState('');
+  const [dueDate, setDueDate] = useState<string>(new Date().toDateString());
+  const [priority, setPriority] = useState<Priority>(Priority.MEDIUM);
 
   const handleAddTodo = useCallback(
     (title: string, dueDate: string, priority: Priority) => {
@@ -36,26 +43,15 @@ export const Home = () => {
     [dispatch],
   );
 
-  const updatePriority = useCallback(
-    (item: TodoItemType) => {
-      const priorities = [Priority.HIGH, Priority.MEDIUM, Priority.LOW];
-      const currentIndex = priorities.indexOf(item.priority);
-      const nextPriority = priorities[(currentIndex + 1) % priorities.length];
-      dispatch(updateTodo({...item, priority: nextPriority}));
-    },
-    [dispatch],
-  );
-
   const renderItem = useCallback(
     ({item, index}: {item: TodoItemType; index: number}) => (
       <TodoItem
         item={item}
         index={index}
-        onPress={() => updatePriority(item)}
         onDelete={() => handleDeleteTodo(item.id)}
       />
     ),
-    [handleDeleteTodo, updatePriority],
+    [handleDeleteTodo],
   );
 
   return (
@@ -69,15 +65,39 @@ export const Home = () => {
         removeClippedSubviews={true}
         maxToRenderPerBatch={10}
         windowSize={5}
+        ListHeaderComponent={() => (
+          <>
+            {isCreateTask && (
+              <TodoForm
+                title={title}
+                setTitle={setTitle}
+                dueDate={dueDate}
+                setDueDate={setDueDate}
+                priority={priority}
+                setPriority={setPriority}
+                onSubmit={(title, dueDate, priority) => {
+                  handleAddTodo(title, dueDate, priority);
+                  setTitle('');
+                  setDueDate(new Date().toDateString());
+                  setPriority(Priority.MEDIUM);
+                  setIsCreateTask(false);
+                }}
+                onDelete={() => {}}
+                onCancel={() => setIsCreateTask(false)}
+              />
+            )}
+          </>
+        )}
       />
       <TouchableOpacity
         style={styles.addButton}
         onPress={() => {
-          handleAddTodo(
-            `Task ${todos.length + 1}`,
-            '2025-01-17',
-            Priority.MEDIUM,
-          );
+          // handleAddTodo(
+          //   `Task ${todos.length + 1}`,
+          //   '2025-01-17',
+          //   Priority.MEDIUM,
+          // );
+          setIsCreateTask(true);
         }}>
         <Text style={styles.addButtonText}>Tạo task mới +</Text>
       </TouchableOpacity>

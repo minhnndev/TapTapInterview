@@ -30,11 +30,11 @@ const {width} = Dimensions.get('window');
 interface Props {
   item: TodoItemType;
   onPress?: () => void;
-  onDelete: () => void;
+  onDelete?: () => void;
   index: number;
 }
 
-const TodoItem: React.FC<Props> = ({item, onPress, onDelete, index}) => {
+const TodoItem: React.FC<Props> = ({item, onDelete, index}) => {
   const [isEditing, setIsEditing] = useState(false);
   const [editedTitle, setEditedTitle] = useState(item.title);
   const [editedDueDate, setEditedDueDate] = useState(item.dueDate);
@@ -104,53 +104,45 @@ const TodoItem: React.FC<Props> = ({item, onPress, onDelete, index}) => {
     setIsEditing(false);
   };
 
-  return (
+  return isEditing ? (
+    <View>
+      <TodoForm
+        title={editedTitle}
+        dueDate={editedDueDate}
+        priority={editedPriority}
+        setTitle={setEditedTitle}
+        setDueDate={setEditedDueDate}
+        setPriority={setEditedPriority}
+        onSubmit={handleUpdate}
+        onDelete={onDelete}
+        onCancel={() => setIsEditing(false)}
+      />
+    </View>
+  ) : (
     <Animated.View style={[styles.container, animatedStyle]}>
-      {isEditing ? (
-        <View>
-          <TodoForm
-            title={editedTitle}
-            dueDate={editedDueDate}
-            priority={editedPriority}
-            setTitle={setEditedTitle}
-            setDueDate={setEditedDueDate}
-            setPriority={setEditedPriority}
-            onSubmit={handleUpdate}
-            onDelete={onDelete}
-            onCancel={() => setIsEditing(false)}
-          />
+      <TouchableOpacity onLongPress={handleDelete} style={styles.content}>
+        <View style={styles.checkbox} />
+        <View style={styles.textContainer}>
+          <Text style={styles.title}>{item.title}</Text>
+          <Text
+            style={[styles.priority, {color: getPriorityColor(item.priority)}]}>
+            {getPriorityText(item.priority)}
+          </Text>
         </View>
-      ) : (
-        <TouchableOpacity
-          onPress={onPress}
-          onLongPress={handleDelete}
-          style={styles.content}>
-          <View style={styles.checkbox} />
-          <View style={styles.textContainer}>
-            <Text style={styles.title}>{item.title}</Text>
-            <Text
-              style={[
-                styles.priority,
-                {color: getPriorityColor(item.priority)},
-              ]}>
-              {getPriorityText(item.priority)}
-            </Text>
-          </View>
-          <View style={{gap: 8, alignItems: 'flex-end'}}>
-            <TouchableOpacity
-              onPress={() => setIsEditing(true)}
-              hitSlop={{
-                top: 10,
-                bottom: 10,
-                left: 10,
-                right: 10,
-              }}>
-              <Image source={IconAssets.editIcon} style={styles.icon} />
-            </TouchableOpacity>
-            <Text style={styles.dueDate}>{getDueDateText(item.dueDate)}</Text>
-          </View>
-        </TouchableOpacity>
-      )}
+        <View style={{gap: 8, alignItems: 'flex-end'}}>
+          <TouchableOpacity
+            onPress={() => setIsEditing(true)}
+            hitSlop={{
+              top: 10,
+              bottom: 10,
+              left: 10,
+              right: 10,
+            }}>
+            <Image source={IconAssets.editIcon} style={styles.icon} />
+          </TouchableOpacity>
+          <Text style={styles.dueDate}>{getDueDateText(item.dueDate)}</Text>
+        </View>
+      </TouchableOpacity>
     </Animated.View>
   );
 };

@@ -12,6 +12,17 @@ export const getPriorityColor = (priority: Priority) => {
   }
 };
 
+export const getPriorityTextButton = (priority: Priority) => {
+  switch (priority) {
+    case Priority.HIGH:
+      return 'Cao';
+    case Priority.MEDIUM:
+      return 'Trung bình';
+    case Priority.LOW:
+      return 'Thấp';
+  }
+};
+
 export const getPriorityText = (priority: Priority) => {
   switch (priority) {
     case Priority.HIGH:

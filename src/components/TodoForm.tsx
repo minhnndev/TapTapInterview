@@ -1,4 +1,4 @@
-import React from 'react';
+import React, {useState} from 'react';
 import {
   Image,
   StyleSheet,
@@ -7,77 +7,68 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import {Priority} from '../types';
+import {Priority, TodoItem} from '../types';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import dayjs from 'dayjs';
+
+import {useAppDispatch} from '../redux/store';
+import {addTodo, deleteTodo, updateTodo} from '../redux/slices/todoSlice';
+
 import IconAssets from '../assets/ic';
+import PriorityButton from './PriorityButton';
 
 const PriorityArray = [Priority.HIGH, Priority.MEDIUM, Priority.LOW];
 
-const PriorityButton = ({
-  priority,
-  active,
-  onPress,
-}: {
-  priority: Priority;
-  active: boolean;
-  onPress: () => void;
-}) => {
-  return (
-    <TouchableOpacity
-      style={[
-        styles.priorityButton,
-        active && styles.priorityButtonActive,
-        {
-          backgroundColor: active ? '#007AFF' : '#E8E8E8',
-        },
-      ]}
-      onPress={onPress}>
-      <Text
-        style={[
-          styles.priorityButtonText,
-          active && styles.priorityButtonTextActive,
-        ]}>
-        {priority}
-      </Text>
-    </TouchableOpacity>
-  );
-};
-
 interface Props {
-  title: string;
-  setTitle: (title: string) => void;
-  dueDate: string;
-  setDueDate: (dueDate: string) => void;
-  priority: Priority;
-  setPriority: (priority: Priority) => void;
-  onSubmit: (title: string, dueDate: string, priority: Priority) => void;
-  onDelete?: () => void;
+  itemInitial: TodoItem;
   onCancel: () => void;
 }
 
-export const TodoForm = ({
-  title,
-  setTitle,
-  dueDate,
-  setDueDate,
-  priority,
-  setPriority,
-  onSubmit,
-  onDelete,
-  onCancel,
-}: Props) => {
+export const TodoForm = ({itemInitial, onCancel}: Props) => {
+  const dispatch = useAppDispatch();
+  const [title, setTitle] = useState(itemInitial.title);
+  const [dueDate, setDueDate] = useState(itemInitial.dueDate);
+  const [priority, setPriority] = useState(itemInitial.priority);
+
   const handleSubmit = () => {
     if (title.trim() && dueDate) {
-      onSubmit(title, dueDate, priority);
+      const todoData = {
+        id: itemInitial.id,
+        title: title.trim(),
+        dueDate,
+        priority,
+        ...itemInitial,
+      };
+
+      if (itemInitial.id) {
+        dispatch(
+          updateTodo({
+            ...todoData,
+          }),
+        );
+      } else {
+        dispatch(
+          addTodo({
+            ...todoData,
+          }),
+        );
+      }
+      onCancel();
+    }
+  };
+
+  const handleDelete = () => {
+    if (itemInitial.id) {
+      dispatch(deleteTodo(itemInitial.id));
+      onCancel();
     }
   };
 
   return (
     <View style={styles.container}>
-      {onDelete && (
+      {itemInitial.id && (
         <TouchableOpacity
-          onPress={onDelete}
+          onPress={handleDelete}
           hitSlop={{
             top: 10,
             bottom: 10,
@@ -85,8 +76,8 @@ export const TodoForm = ({
             right: 10,
           }}
           style={{
-            alignSelf: 'flex-end',
             padding: 8,
+            alignSelf: 'flex-end',
             flexDirection: 'row',
             alignItems: 'center',
           }}>
@@ -107,13 +98,7 @@ export const TodoForm = ({
         autoFocus
       />
 
-      <View
-        style={{
-          flexDirection: 'row',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          paddingBottom: 8,
-        }}>
+      <View style={styles.flexRowBetween}>
         <Text style={styles.priorityLabel}>Thời hạn:</Text>
         <DateTimePicker
           value={dayjs(dueDate).toDate()}
@@ -180,6 +165,12 @@ const styles = StyleSheet.create({
     marginBottom: 16,
     fontSize: 16,
   },
+  flexRowBetween: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingBottom: 8,
+  },
   priorityContainer: {
     marginBottom: 20,
   },
@@ -190,22 +181,6 @@ const styles = StyleSheet.create({
   priorityButtons: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-  },
-  priorityButton: {
-    flex: 1,
-    padding: 8,
-    borderRadius: 8,
-    marginHorizontal: 4,
-    alignItems: 'center',
-  },
-  priorityButtonActive: {
-    borderWidth: 0,
-  },
-  priorityButtonText: {
-    color: '#000',
-  },
-  priorityButtonTextActive: {
-    color: '#FFF',
   },
   buttonContainer: {
     flexDirection: 'row',

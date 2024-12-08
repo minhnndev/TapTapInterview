@@ -2,11 +2,13 @@ import React, {useEffect, useState} from 'react';
 import {
   Dimensions,
   Image,
+  Pressable,
   StyleSheet,
   Text,
   TouchableOpacity,
   View,
 } from 'react-native';
+import CheckBox from '@react-native-community/checkbox';
 import Animated, {
   Extrapolation,
   interpolate,
@@ -18,9 +20,10 @@ import Animated, {
 } from 'react-native-reanimated';
 
 import {useAppDispatch} from '../redux/store';
+import {toggleSelected} from '../redux/slices/todoSlice';
+
 import {getDueDateText, getPriorityColor, getPriorityText} from '../utils';
 
-import {updateTodo} from '../redux/slices/todoSlice';
 import {TodoItem as TodoItemType} from '../types';
 import IconAssets from '../assets/ic';
 import {TodoForm} from './TodoForm';
@@ -35,11 +38,9 @@ interface Props {
 }
 
 const TodoItem: React.FC<Props> = ({item, onDelete, index}) => {
-  const [isEditing, setIsEditing] = useState(false);
-  const [editedTitle, setEditedTitle] = useState(item.title);
-  const [editedDueDate, setEditedDueDate] = useState(item.dueDate);
-  const [editedPriority, setEditedPriority] = useState(item.priority);
   const dispatch = useAppDispatch();
+
+  const [isEditing, setIsEditing] = useState(false);
 
   const translateX = useSharedValue(width);
   const opacity = useSharedValue(0);
@@ -92,44 +93,37 @@ const TodoItem: React.FC<Props> = ({item, onDelete, index}) => {
     };
   });
 
-  const handleUpdate = () => {
-    dispatch(
-      updateTodo({
-        ...item,
-        title: editedTitle,
-        dueDate: editedDueDate,
-        priority: editedPriority,
-      }),
-    );
-    setIsEditing(false);
-  };
-
   return isEditing ? (
-    <View>
-      <TodoForm
-        title={editedTitle}
-        dueDate={editedDueDate}
-        priority={editedPriority}
-        setTitle={setEditedTitle}
-        setDueDate={setEditedDueDate}
-        setPriority={setEditedPriority}
-        onSubmit={handleUpdate}
-        onDelete={onDelete}
-        onCancel={() => setIsEditing(false)}
-      />
-    </View>
+    <TodoForm itemInitial={item} onCancel={() => setIsEditing(false)} />
   ) : (
     <Animated.View style={[styles.container, animatedStyle]}>
-      <TouchableOpacity onLongPress={handleDelete} style={styles.content}>
-        <View style={styles.checkbox} />
+      <Pressable onLongPress={handleDelete} style={styles.content}>
+        <CheckBox
+          disabled={false}
+          boxType="square"
+          tintColor="#757575"
+          onTintColor="#4CAF50"
+          onCheckColor="#4CAF50"
+          animationDuration={0}
+          value={item.selected}
+          onValueChange={() => dispatch(toggleSelected(item.id))}
+          style={styles.checkbox}
+        />
         <View style={styles.textContainer}>
           <Text style={styles.title}>{item.title}</Text>
           <Text
-            style={[styles.priority, {color: getPriorityColor(item.priority)}]}>
-            {getPriorityText(item.priority)}
+            style={[
+              styles.priority,
+              {
+                color: item.completed
+                  ? '#007AFF'
+                  : getPriorityColor(item.priority),
+              },
+            ]}>
+            {item.completed ? 'Đã xong' : getPriorityText(item.priority)}
           </Text>
         </View>
-        <View style={{gap: 8, alignItems: 'flex-end'}}>
+        <View style={{gap: 16, alignItems: 'flex-end'}}>
           <TouchableOpacity
             onPress={() => setIsEditing(true)}
             hitSlop={{
@@ -142,7 +136,7 @@ const TodoItem: React.FC<Props> = ({item, onDelete, index}) => {
           </TouchableOpacity>
           <Text style={styles.dueDate}>{getDueDateText(item.dueDate)}</Text>
         </View>
-      </TouchableOpacity>
+      </Pressable>
     </Animated.View>
   );
 };
@@ -165,18 +159,16 @@ const styles = StyleSheet.create({
   },
   content: {
     flexDirection: 'row',
-    alignItems: 'center',
   },
   checkbox: {
+    alignSelf: 'flex-start',
     width: 24,
     height: 24,
-    borderRadius: 4,
-    borderWidth: 2,
-    borderColor: '#E0E0E0',
     marginRight: 12,
   },
   textContainer: {
     flex: 1,
+    gap: 8,
   },
   title: {
     fontSize: 16,

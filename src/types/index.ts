@@ -8,6 +8,7 @@ export interface TodoItem {
   title: string;
   dueDate: string;
   priority: Priority;
-  createdAt: number;
+  createdAt: string;
   completed: boolean;
+  selected: boolean;
 }

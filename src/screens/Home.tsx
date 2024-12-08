@@ -5,22 +5,27 @@ import {
   StyleSheet,
   Text,
   TouchableOpacity,
+  View,
 } from 'react-native';
-import TodoItem from '../components/TodoItem';
-import {addTodo, deleteTodo} from '../redux/slices/todoSlice';
+import {
+  addTodo,
+  deleteTodo,
+  resetSelected,
+  markComplete,
+  markIncomplete,
+} from '../redux/slices/todoSlice';
 import {useAppDispatch, useAppSelector} from '../redux/store';
 import {Priority, TodoItem as TodoItemType} from '../types';
-import {TodoForm} from '../components/TodoForm';
+
+import TodoItem from '../components/TodoItem';
+import ModalAddTodo from '../components/modal/ModalAddTodo';
 
 export const Home = () => {
   const dispatch = useAppDispatch();
   const todos = useAppSelector(state => state.todo.items);
+  const selectedTodos = todos.filter(todo => todo.selected);
 
   const [isCreateTask, setIsCreateTask] = useState(false);
-
-  const [title, setTitle] = useState('');
-  const [dueDate, setDueDate] = useState<string>(new Date().toDateString());
-  const [priority, setPriority] = useState<Priority>(Priority.MEDIUM);
 
   const handleAddTodo = useCallback(
     (title: string, dueDate: string, priority: Priority) => {
@@ -36,22 +41,89 @@ export const Home = () => {
     [dispatch],
   );
 
-  const handleDeleteTodo = useCallback(
-    (id: string) => {
-      dispatch(deleteTodo(id));
-    },
-    [dispatch],
-  );
+  const handleDelete = () => {
+    const selectedIds = todos
+      .filter(todo => todo.selected)
+      .map(todo => todo.id);
+    selectedIds.forEach(id => dispatch(deleteTodo(id)));
+
+    dispatch(resetSelected());
+  };
+
+  const handleComplete = () => {
+    const selectedIds = todos
+      .filter(todo => todo.selected)
+      .map(todo => todo.id);
+
+    dispatch(markComplete(selectedIds));
+
+    dispatch(resetSelected());
+  };
+
+  const handleIncomplete = () => {
+    const selectedIds = todos
+      .filter(todo => todo.selected)
+      .map(todo => todo.id);
+
+    dispatch(markIncomplete(selectedIds));
+
+    dispatch(resetSelected());
+  };
+
+  const handleToggleComplete = () => {
+    const selectedTask = todos.filter(todo => todo.selected);
+    const allCompleted = selectedTask.every(todo => todo.completed);
+
+    if (allCompleted) {
+      handleIncomplete();
+    } else {
+      handleComplete();
+    }
+  };
 
   const renderItem = useCallback(
     ({item, index}: {item: TodoItemType; index: number}) => (
       <TodoItem
         item={item}
         index={index}
-        onDelete={() => handleDeleteTodo(item.id)}
+        onDelete={() => dispatch(deleteTodo(item.id))}
       />
     ),
-    [handleDeleteTodo],
+    [dispatch],
+  );
+
+  const renderActionButtons = (selectedCount: number) => (
+    <View style={styles.actionButtonsContainer}>
+      <TouchableOpacity
+        style={[styles.addButton, styles.deleteButton]}
+        onPress={handleDelete}>
+        <Text style={styles.addButtonText}>{`Xoá ${selectedCount} task`}</Text>
+      </TouchableOpacity>
+      <TouchableOpacity
+        style={[styles.addButton, styles.completeButton]}
+        onPress={handleToggleComplete}>
+        <Text
+          style={
+            styles.addButtonText
+          }>{`Hoàn thành ${selectedCount} task`}</Text>
+      </TouchableOpacity>
+    </View>
+  );
+
+  const renderCreateTaskButton = () => (
+    <TouchableOpacity
+      style={styles.addButton}
+      onPress={() => {
+        // Uncomment this line to create a new task with random data test
+        // handleAddTodo(
+        //   `Task ${todos.length + 1}`,
+        //   `2025-01-${Math.floor(Math.random() * 20)}`,
+        //   Priority.MEDIUM,
+        // );
+        setIsCreateTask(true);
+      }}>
+      <Text style={styles.addButtonText}>+ Tạo task mới</Text>
+    </TouchableOpacity>
   );
 
   return (
@@ -65,42 +137,36 @@ export const Home = () => {
         removeClippedSubviews={true}
         maxToRenderPerBatch={10}
         windowSize={5}
-        ListHeaderComponent={() => (
-          <>
-            {isCreateTask && (
-              <TodoForm
-                title={title}
-                setTitle={setTitle}
-                dueDate={dueDate}
-                setDueDate={setDueDate}
-                priority={priority}
-                setPriority={setPriority}
-                onSubmit={(title, dueDate, priority) => {
-                  handleAddTodo(title, dueDate, priority);
-                  setTitle('');
-                  setDueDate(new Date().toDateString());
-                  setPriority(Priority.MEDIUM);
-                  setIsCreateTask(false);
-                }}
-                onDelete={() => {}}
-                onCancel={() => setIsCreateTask(false)}
-              />
-            )}
-          </>
-        )}
+        // ListHeaderComponent={() => (
+        //   <>
+        //     {isCreateTask && (
+        //       <TodoForm
+        //         itemInitial={{
+        //           id: '',
+        //           title: '',
+        //           dueDate: new Date().toISOString(),
+        //           priority: Priority.MEDIUM,
+        //           completed: false,
+        //           createdAt: new Date().toISOString(),
+        //         }}
+        //         onCancel={() => setIsCreateTask(false)}
+        //       />
+        //     )}
+        //   </>
+        // )}
       />
-      <TouchableOpacity
-        style={styles.addButton}
-        onPress={() => {
-          // handleAddTodo(
-          //   `Task ${todos.length + 1}`,
-          //   '2025-01-17',
-          //   Priority.MEDIUM,
-          // );
-          setIsCreateTask(true);
-        }}>
-        <Text style={styles.addButtonText}>Tạo task mới +</Text>
-      </TouchableOpacity>
+
+      <View style={styles.buttonContainer}>
+        {selectedTodos.length > 0
+          ? renderActionButtons(selectedTodos.length)
+          : renderCreateTaskButton()}
+      </View>
+
+      <ModalAddTodo
+        visible={isCreateTask}
+        onClose={() => setIsCreateTask(false)}
+        onSubmit={handleAddTodo}
+      />
     </SafeAreaView>
   );
 };
@@ -121,15 +187,32 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingBottom: 80,
   },
-  addButton: {
+
+  buttonContainer: {
     position: 'absolute',
     bottom: 20,
-    left: 16,
-    right: 16,
-    backgroundColor: '#FF4081',
+    left: 0,
+    right: 0,
+    padding: 16,
+  },
+  actionButtonsContainer: {
+    gap: 8,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  addButton: {
     borderRadius: 48,
     padding: 16,
+    backgroundColor: '#FF4081',
     alignItems: 'center',
+  },
+  deleteButton: {
+    flex: 1,
+    backgroundColor: '#757575',
+  },
+  completeButton: {
+    flex: 2,
+    backgroundColor: '#4CAF50',
   },
   addButtonText: {
     color: 'white',

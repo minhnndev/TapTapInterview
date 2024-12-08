@@ -21,12 +21,13 @@ const todoSlice = createSlice({
       }>,
     ) => {
       state.items.push({
-        id: Date.now().toString(),
+        id: new Date(Date.now()).toISOString(),
         title: action.payload.title,
         priority: action.payload.priority,
-        createdAt: Date.now(),
+        createdAt: new Date(Date.now()).toISOString(),
         dueDate: new Date(action.payload.dueDate).toISOString(),
         completed: false,
+        selected: false,
       });
       state.items.sort((a, b) => {
         const priorityOrder = {
@@ -59,15 +60,43 @@ const todoSlice = createSlice({
     deleteTodo: (state, action: PayloadAction<string>) => {
       state.items = state.items.filter(item => item.id !== action.payload);
     },
-    toggleComplete: (state, action: PayloadAction<string>) => {
+    markComplete: (state, action: PayloadAction<string[]>) => {
+      action.payload.forEach(id => {
+        const todo = state.items.find(item => item.id === id);
+        if (todo) {
+          todo.completed = true;
+        }
+      });
+    },
+    markIncomplete: (state, action: PayloadAction<string[]>) => {
+      action.payload.forEach(id => {
+        const todo = state.items.find(item => item.id === id);
+        if (todo) {
+          todo.completed = false;
+        }
+      });
+    },
+    toggleSelected: (state, action: PayloadAction<string>) => {
       const todo = state.items.find(item => item.id === action.payload);
       if (todo) {
-        todo.completed = !todo.completed;
+        todo.selected = !todo.selected;
       }
+    },
+    resetSelected: state => {
+      state.items.forEach(item => {
+        item.selected = false;
+      });
     },
   },
 });
 
-export const {addTodo, updateTodo, deleteTodo, toggleComplete} =
-  todoSlice.actions;
+export const {
+  addTodo,
+  updateTodo,
+  deleteTodo,
+  markComplete,
+  markIncomplete,
+  toggleSelected,
+  resetSelected,
+} = todoSlice.actions;
 export default todoSlice.reducer;
